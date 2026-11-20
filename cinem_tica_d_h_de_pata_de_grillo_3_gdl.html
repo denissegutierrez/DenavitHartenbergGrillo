@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinemática D-H: Pata de Grillo (3 GDL)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- MathJax para renderizado matemático de alta precisión -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <!-- Three.js para visualización 3D interactiva -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos personalizados para sliders técnicos y barras de desplazamiento */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 999px;
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            border: 2px solid #ecfdf5;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #34d399;
+        }
+        input[type="range"].amber-slider::-webkit-slider-thumb {
+            background: #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+        input[type="range"].amber-slider::-webkit-slider-thumb:hover {
+            background: #fbbf24;
+        }
+        .matrix-bracket {
+            position: relative;
+            padding: 0.5rem 0.75rem;
+        }
+        .matrix-bracket::before,
+        .matrix-bracket::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            border: 2px solid #64748b;
+        }
+        .matrix-bracket::before {
+            left: 0;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+        }
+        .matrix-bracket::after {
+            right: 0;
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+        }
+        /* Prevenir scroll horizontal */
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+
+    <!-- Encabezado Técnico -->
+    <header class="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-start sm:items-center gap-3.5">
+                <!-- Icono SVG Bioinspirado (Silueta Articulada de Grillo) -->
+                <div class="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-amber-500/10 border border-emerald-500/30 text-emerald-400 shrink-0 shadow-lg shadow-emerald-950/50">
+                    <svg class="w-8 h-8" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Cuerpo estilizado -->
+                        <ellipse cx="11" cy="21" rx="6" ry="3.5" transform="rotate(-15 11 21)" class="fill-emerald-500/20"/>
+                        <circle cx="5" cy="19" r="2.2" class="fill-emerald-400/30"/>
+                        <!-- Antenas -->
+                        <path d="M4 17 C 2 12, 6 8, 12 6" stroke-width="1.4" class="text-emerald-300/70"/>
+                        <!-- Pata trasera saltadora (Coxa -> Fémur -> Tibia -> Tarso) -->
+                        <circle cx="14" cy="21" r="1.5" class="fill-amber-400 stroke-amber-300"/>
+                        <path d="M14 21 L24 9 L30 25 L34 26" class="text-amber-400" stroke-width="2.2"/>
+                        <circle cx="24" cy="9" r="1.5" class="fill-emerald-400 stroke-emerald-200"/>
+                        <circle cx="30" cy="25" r="1.3" class="fill-emerald-400 stroke-emerald-200"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Robótica Bioinspirada</span>
+                        <span class="text-xs font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">Cadena Cinemática RRR (3 GDL)</span>
+                    </div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight mt-1">
+                        Cinemática Directa y Tabla de Denavit-Hartenberg: <span class="text-emerald-400">Pata de Grillo</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Botones de Presets Anatómicos -->
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium mr-1 hidden sm:inline">Posturas:</span>
+                <button onclick="applyPreset('neutral')" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    Cero D-H
+                </button>
+                <button onclick="applyPreset('stance')" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition">
+                    Apoyo / Marcha
+                </button>
+                <button onclick="applyPreset('jump')" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition">
+                    Carga de Salto
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Sección Superior: Visualizador 3D + Panel de Control y Efector Final -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Columna Izquierda: Simulador 3D Interactivo (7 columnas en desktop) -->
+            <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden flex flex-col shadow-xl">
+                <div class="px-4 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-900">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <h2 class="text-sm font-semibold text-slate-100">Simulador Cinemático 3D (Convención D-H Estándar)</h2>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-400">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="toggleFrames" checked class="rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500">
+                            <span>Ejes $\{i\}$</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                            <input type="checkbox" id="toggleAnatomy" checked class="rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500">
+                            <span>Malla Bio-Grillo</span>
+                        </label>
+                        <button onclick="resetCamera()" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Restaurar vista">
+                            Centrar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contenedor del Canvas 3D -->
+                <div id="canvas-container" class="relative w-full h-[360px] sm:h-[440px] bg-gradient-to-b from-slate-950 to-slate-900 cursor-grab active:cursor-grabbing">
+                    <!-- Leyenda flotante de ejes -->
+                    <div class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-sm border border-slate-800 rounded-xl p-2.5 text-xs space-y-1 pointer-events-none">
+                        <div class="font-semibold text-slate-300 mb-1">Sistemas Coordenados D-H</div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-0.5 bg-rose-500 inline-block"></span>
+                            <span class="font-mono text-rose-400">Eje $X_i$</span>
+                            <span class="text-slate-400">(Normal común)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-0.5 bg-emerald-500 inline-block"></span>
+                            <span class="font-mono text-emerald-400">Eje $Y_i$</span>
+                            <span class="text-slate-400">(Regla mano der.)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-0.5 bg-sky-500 inline-block"></span>
+                            <span class="font-mono text-sky-400">Eje $Z_i$</span>
+                            <span class="text-slate-400">(Eje de rotación)</span>
+                        </div>
+                    </div>
+
+                    <!-- Instrucción táctil / ratón -->
+                    <div class="absolute bottom-3 right-3 bg-slate-950/75 backdrop-blur-sm border border-slate-800/80 rounded-lg px-2.5 py-1 text-[11px] text-slate-400 pointer-events-none">
+                        Arrastra para rotar • Rueda/Pellizco para zoom
+                    </div>
+                </div>
+
+                <!-- Barra de Telemetría del Extremo Efector (Tarso) -->
+                <div class="bg-slate-950/90 border-t border-slate-800 px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-2.5">
+                        <div class="text-[11px] font-mono text-slate-400 uppercase">Tarso $P_x$ (mm)</div>
+                        <div id="pos-x" class="text-lg font-mono font-bold text-rose-400 mt-0.5">0.00</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-2.5">
+                        <div class="text-[11px] font-mono text-slate-400 uppercase">Tarso $P_y$ (mm)</div>
+                        <div id="pos-y" class="text-lg font-mono font-bold text-emerald-400 mt-0.5">0.00</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-2.5">
+                        <div class="text-[11px] font-mono text-slate-400 uppercase">Tarso $P_z$ (mm)</div>
+                        <div id="pos-z" class="text-lg font-mono font-bold text-sky-400 mt-0.5">0.00</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-2.5">
+                        <div class="text-[11px] font-mono text-slate-400 uppercase">Alcance $\|P\|$</div>
+                        <div id="pos-norm" class="text-lg font-mono font-bold text-amber-400 mt-0.5">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Controles Articulares y Longitudes (5 columnas en desktop) -->
+            <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl space-y-5">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-sm font-semibold text-white uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                            </svg>
+                            Variables Articulares ($\theta_i$)
+                        </h2>
+                        <span class="text-xs font-mono text-slate-400">Grados (°)</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Articulación 1: Coxa -->
+                        <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-3.5">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <div>
+                                    <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mr-1.5">GDL 1</span>
+                                    <span class="text-sm font-medium text-slate-100">$\theta_1$ — Rotación Coxal (Yaw)</span>
+                                </div>
+                                <span id="val-theta1" class="font-mono text-sm font-bold text-emerald-400">0°</span>
+                            </div>
+                            <input type="range" id="slider-theta1" min="-90" max="90" value="15" step="1" class="w-full">
+                            <p class="text-[11px] text-slate-400 mt-1">Giro horizontal alrededor de $Z_0$ (protracción / retracción de la pata).</p>
+                        </div>
+
+                        <!-- Articulación 2: Fémur -->
+                        <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-3.5">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <div>
+                                    <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mr-1.5">GDL 2</span>
+                                    <span class="text-sm font-medium text-slate-100">$\theta_2$ — Elevación Femoral (Pitch)</span>
+                                </div>
+                                <span id="val-theta2" class="font-mono text-sm font-bold text-emerald-400">45°</span>
+                            </div>
+                            <input type="range" id="slider-theta2" min="-60" max="110" value="55" step="1" class="w-full">
+                            <p class="text-[11px] text-slate-400 mt-1">Elevación o depresión del fémur alrededor de $Z_1$ (articulación trocánter-fémur).</p>
+                        </div>
+
+                        <!-- Articulación 3: Tibia -->
+                        <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-3.5">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <div>
+                                    <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mr-1.5">GDL 3</span>
+                                    <span class="text-sm font-medium text-slate-100">$\theta_3$ — Flexión Tibial (Pitch)</span>
+                                </div>
+                                <span id="val-theta3" class="font-mono text-sm font-bold text-emerald-400">-95°</span>
+                            </div>
+                            <input type="range" id="slider-theta3" min="-150" max="15" value="-105" step="1" class="w-full">
+                            <p class="text-[11px] text-slate-400 mt-1">Flexión/extensión de la tibia alrededor de $Z_2$ (articulación fémur-tibia).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Longitudes de los Eslabones -->
+                <div class="pt-3 border-t border-slate-800">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Parámetros Geométricos ($a_i$ en mm)</h3>
+                        <span class="text-[11px] text-slate-400">Escala anatómica (10x)</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-mono text-slate-300">Coxa $L_1$</span>
+                                <span id="val-l1" class="font-mono font-semibold text-amber-400">25</span>
+                            </div>
+                            <input type="range" id="slider-l1" min="10" max="50" value="25" step="1" class="w-full amber-slider">
+                        </div>
+                        <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-mono text-slate-300">Fémur $L_2$</span>
+                                <span id="val-l2" class="font-mono font-semibold text-amber-400">85</span>
+                            </div>
+                            <input type="range" id="slider-l2" min="40" max="130" value="85" step="1" class="w-full amber-slider">
+                        </div>
+                        <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-mono text-slate-300">Tibia $L_3$</span>
+                                <span id="val-l3" class="font-mono font-semibold text-amber-400">90</span>
+                            </div>
+                            <input type="range" id="slider-l3" min="40" max="140" value="90" step="1" class="w-full amber-slider">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Intermedia: Tabla Dinámica de Denavit-Hartenberg + Matrices de Transformación -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Tabla de Parámetros Denavit-Hartenberg (6 columnas) -->
+            <div class="lg:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-white">Tabla de Parámetros Denavit-Hartenberg</h2>
+                            <p class="text-xs text-slate-400">Convención D-H Estándar: $^ {i-1}T_i = \text{Rot}_{z}(\theta_i)\,\text{Trans}_{z}(d_i)\,\text{Trans}_{x}(a_i)\,\text{Rot}_{x}(\alpha_i)$</p>
+                        </div>
+                        <span class="px-2.5 py-1 text-xs font-mono rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Tiempo Real</span>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-950 text-slate-300 text-xs font-mono border-b border-slate-800">
+                                    <th class="py-3 px-3">Eslabón ($i$)</th>
+                                    <th class="py-3 px-3 text-emerald-400">$\theta_i$ (rad / °)</th>
+                                    <th class="py-3 px-3 text-sky-400">$d_i$ (mm)</th>
+                                    <th class="py-3 px-3 text-amber-400">$a_i$ (mm)</th>
+                                    <th class="py-3 px-3 text-purple-400">$\alpha_i$ (rad / °)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/80 text-xs sm:text-sm font-mono">
+                                <!-- Fila 1: Coxa -->
+                                <tr class="hover:bg-slate-800/40 transition">
+                                    <td class="py-3 px-3 font-sans">
+                                        <div class="font-semibold text-white">1. Coxa</div>
+                                        <div class="text-[11px] text-slate-400">Base $\to$ Trocánter</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-emerald-300">
+                                        <div id="dh-t1-deg" class="font-bold">15°</div>
+                                        <div class="text-[11px] text-slate-400">$\theta_1$ (var)</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-sky-300">
+                                        <div class="font-bold">0</div>
+                                        <div class="text-[11px] text-slate-400">$d_1 = 0$</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-amber-300">
+                                        <div id="dh-a1" class="font-bold">25</div>
+                                        <div class="text-[11px] text-slate-400">$L_1$</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-purple-300">
+                                        <div class="font-bold">+90°</div>
+                                        <div class="text-[11px] text-slate-400">$+\pi/2$</div>
+                                    </td>
+                                </tr>
+                                <!-- Fila 2: Fémur -->
+                                <tr class="hover:bg-slate-800/40 transition">
+                                    <td class="py-3 px-3 font-sans">
+                                        <div class="font-semibold text-white">2. Fémur</div>
+                                        <div class="text-[11px] text-slate-400">Trocánter $\to$ Rodilla</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-emerald-300">
+                                        <div id="dh-t2-deg" class="font-bold">55°</div>
+                                        <div class="text-[11px] text-slate-400">$\theta_2$ (var)</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-sky-300">
+                                        <div class="font-bold">0</div>
+                                        <div class="text-[11px] text-slate-400">$d_2 = 0$</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-amber-300">
+                                        <div id="dh-a2" class="font-bold">85</div>
+                                        <div class="text-[11px] text-slate-400">$L_2$</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-purple-300">
+                                        <div class="font-bold">0°</div>
+                                        <div class="text-[11px] text-slate-400">$0$</div>
+                                    </td>
+                                </tr>
+                                <!-- Fila 3: Tibia -->
+                                <tr class="hover:bg-slate-800/40 transition">
+                                    <td class="py-3 px-3 font-sans">
+                                        <div class="font-semibold text-white">3. Tibia</div>
+                                        <div class="text-[11px] text-slate-400">Rodilla $\to$ Tarso</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-emerald-300">
+                                        <div id="dh-t3-deg" class="font-bold">-105°</div>
+                                        <div class="text-[11px] text-slate-400">$\theta_3$ (var)</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-sky-300">
+                                        <div class="font-bold">0</div>
+                                        <div class="text-[11px] text-slate-400">$d_3 = 0$</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-amber-300">
+                                        <div id="dh-a3" class="font-bold">90</div>
+                                        <div class="text-[11px] text-slate-400">$L_3$</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-purple-300">
+                                        <div class="font-bold">0°</div>
+                                        <div class="text-[11px] text-slate-400">$0$</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Nota técnica sobre torsión alpha_1 -->
+                <div class="mt-4 p-3 rounded-xl bg-slate-950/80 border border-slate-800/90 text-xs text-slate-300 leading-relaxed">
+                    <span class="font-semibold text-purple-400">Nota sobre $\alpha_1 = +90^\circ$:</span> El giro de torsión $+\pi/2$ alrededor de $X_1$ reorienta el eje de rotación $Z_1$ para que sea perpendicular al eje vertical $Z_0$, permitiendo que el fémur y la tibia oscilen en un plano vertical de elevación/extensión mientras la coxa gira horizontalmente.
+                </div>
+            </div>
+
+            <!-- Visor de Matrices de Transformación Homogénea (6 columnas) -->
+            <div class="lg:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-white">Matrices de Transformación Homogénea</h2>
+                            <p class="text-xs text-slate-400">Producto cinemático: $^0T_3 = {}^0T_1(\theta_1) \cdot {}^1T_2(\theta_2) \cdot {}^2T_3(\theta_3)$</p>
+                        </div>
+                        <!-- Selector de Matriz a Inspeccionar -->
+                        <div class="inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800">
+                            <button onclick="selectMatrix('T03')" id="btn-T03" class="matrix-tab px-2.5 py-1 text-xs font-mono rounded-md bg-emerald-600 text-white font-semibold transition">
+                                $^0T_3$
+                            </button>
+                            <button onclick="selectMatrix('T01')" id="btn-T01" class="matrix-tab px-2.5 py-1 text-xs font-mono rounded-md text-slate-400 hover:text-white transition">
+                                $^0T_1$
+                            </button>
+                            <button onclick="selectMatrix('T12')" id="btn-T12" class="matrix-tab px-2.5 py-1 text-xs font-mono rounded-md text-slate-400 hover:text-white transition">
+                                $^1T_2$
+                            </button>
+                            <button onclick="selectMatrix('T23')" id="btn-T23" class="matrix-tab px-2.5 py-1 text-xs font-mono rounded-md text-slate-400 hover:text-white transition">
+                                $^2T_3$
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Renderizado Numérico de la Matriz Seleccionada -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 my-2">
+                        <div class="flex items-center justify-between mb-2">
+                            <span id="matrix-label" class="text-xs font-mono text-emerald-400 font-semibold">Matriz Total $^0T_3$ (Base $\to$ Tarso)</span>
+                            <span class="text-[11px] font-mono text-slate-500">4 × 4 SE(3)</span>
+                        </div>
+                        <div class="matrix-bracket overflow-x-auto">
+                            <table class="w-full text-right font-mono text-xs sm:text-sm">
+                                <tbody id="matrix-body" class="divide-y divide-slate-900/50">
+                                    <!-- Llenado dinámico por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leyenda de Submatrices de Rotación y Traslación -->
+                <div class="grid grid-cols-2 gap-3 mt-3 text-xs">
+                    <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-2.5">
+                        <span class="w-3 h-3 rounded-sm bg-emerald-500/30 border border-emerald-400 shrink-0"></span>
+                        <div>
+                            <div class="font-semibold text-slate-200">Submatriz $R_{3\times3}$</div>
+                            <div class="text-[11px] text-slate-400">Orientación del tarso respecto a $\{0\}$</div>
+                        </div>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-2.5">
+                        <span class="w-3 h-3 rounded-sm bg-amber-500/30 border border-amber-400 shrink-0"></span>
+                        <div>
+                            <div class="font-semibold text-slate-200">Vector $\mathbf{p}_{3\times1}$</div>
+                            <div class="text-[11px] text-slate-400">Coordenadas cartesianas $(P_x, P_y, P_z)$</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Inferior: Fundamentación Matemática y Biomecánica -->
+        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+            <div class="border-b border-slate-800 pb-4">
+                <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <span class="w-2 h-6 rounded-full bg-emerald-500"></span>
+                    Fundamentación Biomecánica y Formulación Matemática D-H
+                </h2>
+                <p class="text-sm text-slate-400 mt-1">
+                    Análisis de la cadena cinemática abierta de 3 grados de libertad (3 GDL) inspirada en la extremidad metatorácica de un grillo (<em>Gryllidae</em>).
+                </p>
+            </div>
+
+            <!-- Grid de 3 Tarjetas Anatómicas -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Coxa -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">Eslabón 1 • Coxa ($L_1$)</span>
+                        <span class="text-xs font-mono text-slate-500">$\theta_1, \alpha_1 = +90^\circ$</span>
+                    </div>
+                    <h3 class="font-semibold text-white text-base">Articulación Torácico-Coxal (Yaw)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Conecta el exoesqueleto del tórax (marco base $\{0\}$) con la coxa. El eje $Z_0$ es vertical y permite el movimiento de abducción/aducción horizontal ($\theta_1$), orientando el plano de acción de toda la pata hacia adelante o hacia atrás durante la marcha trípode.
+                    </p>
+                </div>
+
+                <!-- Fémur -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400">Eslabón 2 • Fémur ($L_2$)</span>
+                        <span class="text-xs font-mono text-slate-500">$\theta_2, \alpha_2 = 0^\circ$</span>
+                    </div>
+                    <h3 class="font-semibold text-white text-base">Articulación Coxa-Trocánter-Fémur (Pitch)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        En los grillos, el trocánter está fusionado funcionalmente al fémur robusto que aloja los músculos extensores del salto. Gracias al giro $\alpha_1 = +90^\circ$, el eje $Z_1$ queda horizontal, permitiendo que $\theta_2$ eleve o descienda el fémur en el plano sagital de la pata.
+                    </p>
+                </div>
+
+                <!-- Tibia -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-sky-500/15 text-sky-400">Eslabón 3 • Tibia ($L_3$)</span>
+                        <span class="text-xs font-mono text-slate-500">$\theta_3, \alpha_3 = 0^\circ$</span>
+                    </div>
+                    <h3 class="font-semibold text-white text-base">Articulación Fémur-Tibia / Rodilla (Pitch)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Es un eslabón esbelto y alargado que termina en el tarso (efector final). Su eje $Z_2$ es paralelo a $Z_1$ ($\alpha_2 = 0^\circ$). Ángulos negativos de $\theta_3$ pliegan la tibia bajo el fémur para almacenar energía elástica antes de la propulsión.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Ecuaciones Matemáticas -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+                <!-- Matriz General D-H -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 overflow-x-auto">
+                    <h4 class="text-xs font-mono uppercase tracking-wider text-emerald-400 mb-2">1. Matriz Homogénea Estándar D-H ($^{i-1}T_i$)</h4>
+                    <div class="text-xs sm:text-sm text-slate-200 py-2">
+                        $$^{i-1}T_i = \begin{bmatrix} \cos\theta_i & -\sin\theta_i\cos\alpha_i & \sin\theta_i\sin\alpha_i & a_i\cos\theta_i \\ \sin\theta_i & \cos\theta_i\cos\alpha_i & -\cos\theta_i\sin\alpha_i & a_i\sin\theta_i \\ 0 & \sin\alpha_i & \cos\alpha_i & d_i \\ 0 & 0 & 0 & 1 \end{bmatrix}$$
+                    </div>
+                </div>
+
+                <!-- Cinemática Directa Analítica -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 overflow-x-auto">
+                    <h4 class="text-xs font-mono uppercase tracking-wider text-amber-400 mb-2">2. Ecuaciones Analíticas de Posición del Tarso ($^0\mathbf{p}_3$)</h4>
+                    <div class="text-xs sm:text-sm text-slate-200 py-1 space-y-1">
+                        $$\begin{aligned}
+                        P_x &= \cos\theta_1 \left( L_1 + L_2\cos\theta_2 + L_3\cos(\theta_2 + \theta_3) \right) \\
+                        P_y &= \sin\theta_1 \left( L_1 + L_2\cos\theta_2 + L_3\cos(\theta_2 + \theta_3) \right) \\
+                        P_z &= L_2\sin\theta_2 + L_3\sin(\theta_2 + \theta_3)
+                        \end{aligned}$$
+                    </div>
+                </div>
+            </div>
+
+            <!-- Definición de los 4 Parámetros D-H -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+                <h4 class="text-xs font-mono uppercase tracking-wider text-slate-300 mb-3">Significado Geométrico de los 4 Parámetros D-H</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                    <div class="space-y-1">
+                        <div class="font-mono font-bold text-emerald-400">$\theta_i$ (Ángulo Articular)</div>
+                        <p class="text-slate-400">Ángulo de rotación alrededor del eje $Z_{i-1}$ para alinear el eje $X_{i-1}$ con el eje $X_i$. Es la variable activa en articulaciones rotacionales (R).</p>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="font-mono font-bold text-sky-400">$d_i$ (Desplazamiento)</div>
+                        <p class="text-slate-400">Distancia medida a lo largo del eje $Z_{i-1}$ desde el origen $\{i-1\}$ hasta la intersección con el eje $X_i$. En esta pata planar-rotacional $d_1=d_2=d_3=0$.</p>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="font-mono font-bold text-amber-400">$a_i$ (Longitud de Eslabón)</div>
+                        <p class="text-slate-400">Distancia medida a lo largo de la normal común $X_i$ entre los ejes $Z_{i-1}$ y $Z_i$. Corresponde directamente a las longitudes anatómicas $L_1, L_2$ y $L_3$.</p>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="font-mono font-bold text-purple-400">$\alpha_i$ (Torsión de Eslabón)</div>
+                        <p class="text-slate-400">Ángulo de rotación alrededor del eje $X_i$ necesario para orientar el eje $Z_{i-1}$ paralelo al eje $Z_i$. Vale $+90^\circ$ en la coxa y $0^\circ$ en fémur y tibia.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-t border-slate-800/80 bg-slate-900/50 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <span>Modelo Cinemático Directo • Convención Denavit-Hartenberg Estándar (3 GDL RRR)</span>
+            <span class="font-mono">Robótica Bioinspirada & Biomecánica de Artrópodos</span>
+        </div>
+    </footer>
+
+    <!-- Lógica Matemática y Motor 3D Three.js -->
+    <script>
+        // =========================================================================
+        // 1. ESTADO GLOBAL DE LA CINEMÁTICA DEL GRILLO
+        // =========================================================================
+        const state = {
+            theta1: 15,   // grados
+            theta2: 55,   // grados
+            theta3: -105, // grados
+            L1: 25,       // mm (Coxa)
+            L2: 85,       // mm (Fémur)
+            L3: 90,       // mm (Tibia)
+            selectedMatrix: 'T03',
+            showFrames: true,
+            showAnatomy: true
+        };
+
+        // Matrices calculadas globales
+        let matrices = {
+            T01: null,
+            T12: null,
+            T23: null,
+            T02: null,
+            T03: null
+        };
+
+        // =========================================================================
+        // 2. ÁLGEBRA MATRICIAL DENAVIT-HARTENBERG (4x4)
+        // =========================================================================
+        function degToRad(deg) {
+            return deg * Math.PI / 180.0;
+        }
+
+        /**
+         * Construye la matriz homogénea estándar de Denavit-Hartenberg (4x4)
+         * A_i = Rot_z(theta) * Trans_z(d) * Trans_x(a) * Rot_x(alpha)
+         */
+        function dhMatrix(thetaDeg, d, a, alphaDeg) {
+            const th = degToRad(thetaDeg);
+            const al = degToRad(alphaDeg);
+            const ct = Math.cos(th);
+            const st = Math.sin(th);
+            const ca = Math.cos(al);
+            const sa = Math.sin(al);
+
+            return [
+                [ct, -st * ca,  st * sa, a * ct],
+                [st,  ct * ca, -ct * sa, a * st],
+                [0,   sa,       ca,      d],
+                [0,   0,        0,       1]
+            ];
+        }
+
+        /**
+         * Multiplicación de matrices 4x4
+         */
+        function multiplyMatrices(A, B) {
+            const res = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < 4; k++) {
+                        sum += A[i][k] * B[k][j];
+                    }
+                    res[i][j] = Math.abs(sum) < 1e-10 ? 0 : sum;
+                }
+            }
+            return res;
+        }
+
+        /**
+         * Recalcula toda la cadena cinemática directa
+         */
+        function computeForwardKinematics() {
+            // Tabla D-H para la pata de grillo 3 GDL:
+            // Eslabón 1 (Coxa):  theta1, d1=0, a1=L1, alpha1=+90°
+            // Eslabón 2 (Fémur): theta2, d2=0, a2=L2, alpha2=0°
+            // Eslabón 3 (Tibia): theta3, d3=0, a3=L3, alpha3=0°
+            const T01 = dhMatrix(state.theta1, 0, state.L1, 90);
+            const T12 = dhMatrix(state.theta2, 0, state.L2, 0);
+            const T23 = dhMatrix(state.theta3, 0, state.L3, 0);
+
+            const T02 = multiplyMatrices(T01, T12);
+            const T03 = multiplyMatrices(T02, T23);
+
+            matrices = { T01, T12, T23, T02, T03 };
+        }
+
+        // =========================================================================
+        // 3. MOTOR DE RENDERIZADO 3D (THREE.JS)
+        // =========================================================================
+        let scene, camera, renderer;
+        let legGroup, thoraxMesh;
+        let frame0, frame1, frame2, frame3;
+        let joint0Mesh, joint1Mesh, joint2Mesh, tipMesh;
+        let link1Mesh, link2Mesh, link3Mesh;
+        let bioCoxa, bioFemur, bioTibia, bioTarsus;
+        let trajectoryLine;
+
+        // Variables de control de cámara orbital manual
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraSpherical = {
+            radius: 260,
+            theta: 0.65, // ángulo horizontal
+            phi: 1.15    // ángulo polar desde +Y (eje vertical en Three.js)
+        };
+        const cameraTarget = new THREE.Vector3(45, 10, 0);
+
+        /**
+         * Convierte coordenadas D-H (X adelante, Y lateral, Z arriba)
+         * a coordenadas de escena Three.js (X derecha, Y arriba, Z frente)
+         */
+        function dhToThreePos(dhPos) {
+            return new THREE.Vector3(dhPos.x, dhPos.z, -dhPos.y);
+        }
+
+        /**
+         * Aplica una matriz D-H 4x4 a un Object3D de Three.js respetando el mapeo de ejes
+         */
+        function applyDHTransformToObject(obj, T_dh) {
+            // Matriz de cambio de base de D-H (X, Y, Z) a Three.js (X, Z, -Y)
+            // P_three = M * P_dh
+            // [ x_th ]   [ 1  0  0 ] [ x_dh ]
+            // [ y_th ] = [ 0  0  1 ] [ y_dh ]
+            // [ z_th ]   [ 0 -1  0 ] [ z_dh ]
+            const M = new THREE.Matrix4().set(
+                1,  0,  0, 0,
+                0,  0,  1, 0,
+                0, -1,  0, 0,
+                0,  0,  0, 1
+            );
+            const M_inv = new THREE.Matrix4().set(
+                1,  0,  0, 0,
+                0,  0, -1, 0,
+                0,  1,  0, 0,
+                0,  0,  0, 1
+            );
+
+            const T_mat = new THREE.Matrix4().set(
+                T_dh[0][0], T_dh[0][1], T_dh[0][2], T_dh[0][3],
+                T_dh[1][0], T_dh[1][1], T_dh[1][2], T_dh[1][3],
+                T_dh[2][0], T_dh[2][1], T_dh[2][2], T_dh[2][3],
+                0,          0,          0,          1
+            );
+
+            // Transformación semejante en espacio Three.js: M * T_dh * M^-1
+            const finalMat = new THREE.Matrix4().multiplyMatrices(M, T_mat).multiply(M_inv);
+            obj.matrixAutoUpdate = false;
+            obj.matrix.copy(finalMat);
+        }
+
+        /**
+         * Crea un sistema de ejes coordenados X (Rojo), Y (Verde), Z (Azul)
+         */
+        function createCoordinateFrame(size = 26, labelText = "") {
+            const group = new THREE.Group();
+            const radius = 0.85;
+            const headLen = 5;
+            const headRad = 2.1;
+
+            function makeAxis(color, dir) {
+                const axisGroup = new THREE.Group();
+                const shaftGeo = new THREE.CylinderGeometry(radius, radius, size - headLen, 12);
+                const shaftMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.2 });
+                const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+                shaft.position.y = (size - headLen) / 2;
+
+                const coneGeo = new THREE.ConeGeometry(headRad, headLen, 12);
+                const coneMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.2 });
+                const cone = new THREE.Mesh(coneGeo, coneMat);
+                cone.position.y = size - headLen / 2;
+
+                axisGroup.add(shaft, cone);
+
+                if (dir === 'x') axisGroup.rotation.z = -Math.PI / 2;
+                if (dir === 'z') axisGroup.rotation.x = Math.PI / 2;
+                return axisGroup;
+            }
+
+            // En espacio local D-H mapeado a Three.js:
+            // X_dh -> +X_three
+            // Y_dh -> -Z_three
+            // Z_dh -> +Y_three
+            const xAxis = makeAxis(0xf43f5e, 'x'); // Rojo (X_i)
+            const yAxis = makeAxis(0x10b981, 'z'); // Verde (Y_i -> -Z_three)
+            yAxis.rotation.x = -Math.PI / 2;
+            const zAxis = makeAxis(0x38bdf8, 'y'); // Azul (Z_i -> +Y_three)
+
+            group.add(xAxis, yAxis, zAxis);
+            return group;
+        }
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(42, width / height, 1, 2000);
+            updateCameraPosition();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // Iluminación técnica de estudio
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight1.position.set(120, 200, 150);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x10b981, 0.45);
+            dirLight2.position.set(-150, -80, -120);
+            scene.add(dirLight2);
+
+            // Rejilla de referencia del suelo (plano X-Y en D-H, es decir X-Z en Three.js)
+            const gridHelper = new THREE.GridHelper(320, 16, 0x334155, 0x1e293b);
+            gridHelper.position.y = -65;
+            scene.add(gridHelper);
+
+            // Representación estilizada del tórax del grillo (anclaje fijo en el origen {0})
+            const thoraxGroup = new THREE.Group();
+            const thoraxGeo = new THREE.SphereGeometry(22, 24, 18);
+            thoraxGeo.scale(1.5, 0.9, 1.0);
+            const thoraxMat = new THREE.MeshStandardMaterial({
+                color: 0x064e3b,
+                emissive: 0x022c22,
+                roughness: 0.45,
+                metalness: 0.25,
+                transparent: true,
+                opacity: 0.78
+            });
+            const thoraxBody = new THREE.Mesh(thoraxGeo, thoraxMat);
+            thoraxBody.position.set(-22, 6, 0);
+
+            // Abdomen posterior del grillo para contexto anatómico
+            const abdomenGeo = new THREE.SphereGeometry(24, 24, 18);
+            abdomenGeo.scale(2.1, 0.85, 0.95);
+            const abdomenBody = new THREE.Mesh(abdomenGeo, thoraxMat);
+            abdomenBody.position.set(-68, 12, 0);
+            abdomenBody.rotation.z = -0.15;
+
+            thoraxGroup.add(thoraxBody, abdomenBody);
+            thoraxMesh = thoraxGroup;
+            scene.add(thoraxMesh);
+
+            // Ejes coordenados D-H {0}, {1}, {2}, {3}
+            frame0 = createCoordinateFrame(34);
+            frame1 = createCoordinateFrame(28);
+            frame2 = createCoordinateFrame(28);
+            frame3 = createCoordinateFrame(26);
+            scene.add(frame0, frame1, frame2, frame3);
+
+            // Esferas articulares (R1, R2, R3 y Efector Final Tarso)
+            const jointMat1 = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.25, metalness: 0.4 });
+            const jointMat2 = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.25, metalness: 0.4 });
+            const tipMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, emissive: 0x881337, roughness: 0.2 });
+
+            joint0Mesh = new THREE.Mesh(new THREE.SphereGeometry(5.5, 20, 20), jointMat1);
+            joint1Mesh = new THREE.Mesh(new THREE.SphereGeometry(5.0, 20, 20), jointMat1);
+            joint2Mesh = new THREE.Mesh(new THREE.SphereGeometry(4.8, 20, 20), jointMat2);
+            tipMesh = new THREE.Mesh(new THREE.SphereGeometry(4.5, 20, 20), tipMat);
+            scene.add(joint0Mesh, joint1Mesh, joint2Mesh, tipMesh);
+
+            // Eslabones estructurales (cilindros cinemáticos)
+            const linkMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.3, metalness: 0.6 });
+            link1Mesh = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 1, 16), linkMat);
+            link2Mesh = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 1, 16), linkMat);
+            link3Mesh = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 1, 16), linkMat);
+            scene.add(link1Mesh, link2Mesh, link3Mesh);
+
+            // Mallas bioinspiradas (Exoesqueleto de Coxa, Fémur robusto y Tibia espinosa)
+            const bioMat = new THREE.MeshStandardMaterial({
+                color: 0x34d399,
+                roughness: 0.35,
+                metalness: 0.15,
+                transparent: true,
+                opacity: 0.55
+            });
+            const femurBioMat = new THREE.MeshStandardMaterial({
+                color: 0xfbbf24,
+                roughness: 0.35,
+                metalness: 0.15,
+                transparent: true,
+                opacity: 0.52
+            });
+
+            bioCoxa = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 6.0, 1, 16), bioMat);
+            // Fémur abultado característico del grillo saltador
+            const femurGeo = new THREE.SphereGeometry(1, 20, 16);
+            bioFemur = new THREE.Mesh(femurGeo, femurBioMat);
+            bioTibia = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 3.2, 1, 16), bioMat);
+            scene.add(bioCoxa, bioFemur, bioTibia);
+
+            // Línea de proyección al suelo para referencia espacial
+            const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+            const lineMat = new THREE.LineDashedMaterial({ color: 0x64748b, dashSize: 4, gapSize: 3 });
+            trajectoryLine = new THREE.Line(lineGeo, lineMat);
+            scene.add(trajectoryLine);
+
+            // Eventos de interacción de cámara (Ratón y Táctil)
+            setupCameraControls(container);
+
+            // Redimensionamiento responsivo
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        /**
+         * Orienta y escala un cilindro entre dos puntos 3D
+         */
+        function updateCylinderBetweenPoints(mesh, pA, pB) {
+            const direction = new THREE.Vector3().subVectors(pB, pA);
+            const length = direction.length();
+            mesh.position.copy(pA).add(pB).multiplyScalar(0.5);
+            mesh.scale.set(1, Math.max(length, 0.001), 1);
+            mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
+        }
+
+        /**
+         * Actualiza todas las posiciones y orientaciones en la escena 3D
+         */
+        function update3DScene() {
+            if (!scene) return;
+
+            const { T01, T02, T03 } = matrices;
+
+            // Posiciones de los orígenes {0}, {1}, {2}, {3} en coordenadas D-H
+            const p0_dh = { x: 0, y: 0, z: 0 };
+            const p1_dh = { x: T01[0][3], y: T01[1][3], z: T01[2][3] };
+            const p2_dh = { x: T02[0][3], y: T02[1][3], z: T02[2][3] };
+            const p3_dh = { x: T03[0][3], y: T03[1][3], z: T03[2][3] };
+
+            // Convertir a Three.js
+            const p0 = dhToThreePos(p0_dh);
+            const p1 = dhToThreePos(p1_dh);
+            const p2 = dhToThreePos(p2_dh);
+            const p3 = dhToThreePos(p3_dh);
+
+            // Actualizar esferas articulares
+            joint0Mesh.position.copy(p0);
+            joint1Mesh.position.copy(p1);
+            joint2Mesh.position.copy(p2);
+            tipMesh.position.copy(p3);
+
+            // Actualizar cilindros cinemáticos
+            updateCylinderBetweenPoints(link1Mesh, p0, p1);
+            updateCylinderBetweenPoints(link2Mesh, p1, p2);
+            updateCylinderBetweenPoints(link3Mesh, p2, p3);
+
+            // Actualizar mallas bioinspiradas
+            updateCylinderBetweenPoints(bioCoxa, p0, p1);
+            updateCylinderBetweenPoints(bioTibia, p2, p3);
+
+            // Fémur abultado orientado entre p1 y p2
+            const femurDir = new THREE.Vector3().subVectors(p2, p1);
+            const femurLen = femurDir.length();
+            bioFemur.position.copy(p1).add(p2).multiplyScalar(0.5);
+            bioFemur.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), femurDir.clone().normalize());
+            bioFemur.scale.set(7.5, Math.max(femurLen * 0.52, 1), 5.5);
+
+            // Actualizar marcos coordenados D-H {0}, {1}, {2}, {3}
+            const I4 = [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]
+            ];
+            applyDHTransformToObject(frame0, I4);
+            applyDHTransformToObject(frame1, T01);
+            applyDHTransformToObject(frame2, T02);
+            applyDHTransformToObject(frame3, T03);
+
+            // Visibilidad de capas
+            frame0.visible = state.showFrames;
+            frame1.visible = state.showFrames;
+            frame2.visible = state.showFrames;
+            frame3.visible = state.showFrames;
+
+            thoraxMesh.visible = state.showAnatomy;
+            bioCoxa.visible = state.showAnatomy;
+            bioFemur.visible = state.showAnatomy;
+            bioTibia.visible = state.showAnatomy;
+
+            // Línea vertical punteada desde el tarso hacia la rejilla del suelo (y = -65)
+            const floorPoint = new THREE.Vector3(p3.x, -65, p3.z);
+            trajectoryLine.geometry.setFromPoints([p3, floorPoint]);
+            trajectoryLine.computeLineDistances();
+        }
+
+        function updateCameraPosition() {
+            const sinPhi = Math.sin(cameraSpherical.phi);
+            const cosPhi = Math.cos(cameraSpherical.phi);
+            const sinTheta = Math.sin(cameraSpherical.theta);
+            const cosTheta = Math.cos(cameraSpherical.theta);
+
+            camera.position.x = cameraTarget.x + cameraSpherical.radius * sinPhi * sinTheta;
+            camera.position.y = cameraTarget.y + cameraSpherical.radius * cosPhi;
+            camera.position.z = cameraTarget.z + cameraSpherical.radius * sinPhi * cosTheta;
+            camera.lookAt(cameraTarget);
+        }
+
+        function resetCamera() {
+            cameraSpherical = { radius: 260, theta: 0.65, phi: 1.15 };
+            updateCameraPosition();
+        }
+
+        function setupCameraControls(domElement) {
+            // Ratón
+            domElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                cameraSpherical.theta -= deltaX * 0.008;
+                cameraSpherical.phi = Math.max(0.15, Math.min(Math.PI - 0.15, cameraSpherical.phi - deltaY * 0.008));
+
+                updateCameraPosition();
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                cameraSpherical.radius = Math.max(110, Math.min(520, cameraSpherical.radius + e.deltaY * 0.25));
+                updateCameraPosition();
+            }, { passive: false });
+
+            // Táctil (1 dedo rotar, 2 dedos zoom)
+            let lastTouchDist = null;
+            domElement.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                } else if (e.touches.length === 2) {
+                    isDragging = false;
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    lastTouchDist = Math.hypot(dx, dy);
+                }
+            }, { passive: true });
+
+            domElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging) {
+                    const deltaX = e.touches[0].clientX - previousMousePosition.x;
+                    const deltaY = e.touches[0].clientY - previousMousePosition.y;
+
+                    cameraSpherical.theta -= deltaX * 0.009;
+                    cameraSpherical.phi = Math.max(0.15, Math.min(Math.PI - 0.15, cameraSpherical.phi - deltaY * 0.009));
+
+                    updateCameraPosition();
+                    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                } else if (e.touches.length === 2 && lastTouchDist !== null) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.hypot(dx, dy);
+                    const delta = lastTouchDist - dist;
+                    cameraSpherical.radius = Math.max(110, Math.min(520, cameraSpherical.radius + delta * 0.6));
+                    updateCameraPosition();
+                    lastTouchDist = dist;
+                }
+            }, { passive: true });
+
+            domElement.addEventListener('touchend', () => {
+                isDragging = false;
+                lastTouchDist = null;
+            });
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            if (!container || !renderer || !camera) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        // =========================================================================
+        // 4. ACTUALIZACIÓN DE INTERFAZ DE USUARIO (TABLA D-H, MATRICES, TELEMETRÍA)
+        // =========================================================================
+        function updateUI() {
+            // Actualizar etiquetas de sliders
+            document.getElementById('val-theta1').textContent = `${state.theta1}°`;
+            document.getElementById('val-theta2').textContent = `${state.theta2}°`;
+            document.getElementById('val-theta3').textContent = `${state.theta3}°`;
+
+            document.getElementById('val-l1').textContent = `${state.L1}`;
+            document.getElementById('val-l2').textContent = `${state.L2}`;
+            document.getElementById('val-l3').textContent = `${state.L3}`;
+
+            // Actualizar Tabla D-H dinámica
+            document.getElementById('dh-t1-deg').textContent = `${state.theta1}° (${degToRad(state.theta1).toFixed(2)} rad)`;
+            document.getElementById('dh-t2-deg').textContent = `${state.theta2}° (${degToRad(state.theta2).toFixed(2)} rad)`;
+            document.getElementById('dh-t3-deg').textContent = `${state.theta3}° (${degToRad(state.theta3).toFixed(2)} rad)`;
+
+            document.getElementById('dh-a1').textContent = `${state.L1}`;
+            document.getElementById('dh-a2').textContent = `${state.L2}`;
+            document.getElementById('dh-a3').textContent = `${state.L3}`;
+
+            // Actualizar Telemetría del Tarso (última columna de T03)
+            const T03 = matrices.T03;
+            const px = T03[0][3];
+            const py = T03[1][3];
+            const pz = T03[2][3];
+            const norm = Math.hypot(px, py, pz);
+
+            document.getElementById('pos-x').textContent = px.toFixed(2);
+            document.getElementById('pos-y').textContent = py.toFixed(2);
+            document.getElementById('pos-z').textContent = pz.toFixed(2);
+            document.getElementById('pos-norm').textContent = `${norm.toFixed(1)} mm`;
+
+            // Renderizar la matriz seleccionada
+            renderSelectedMatrix();
+        }
+
+        function renderSelectedMatrix() {
+            const mat = matrices[state.selectedMatrix];
+            if (!mat) return;
+
+            const labels = {
+                'T03': 'Matriz Total ^0T_3 (Base → Tarso)',
+                'T01': 'Matriz ^0T_1 (Base → Coxa)',
+                'T12': 'Matriz ^1T_2 (Coxa → Fémur)',
+                'T23': 'Matriz ^2T_3 (Fémur → Tibia)'
+            };
+            document.getElementById('matrix-label').textContent = labels[state.selectedMatrix];
+
+            const tbody = document.getElementById('matrix-body');
+            tbody.innerHTML = '';
+
+            for (let i = 0; i < 4; i++) {
+                const tr = document.createElement('tr');
+                for (let j = 0; j < 4; j++) {
+                    const td = document.createElement('td');
+                    td.className = 'py-2 px-2 sm:px-3 ';
+                    const val = mat[i][j];
+
+                    // Colorear según submatriz de rotación, vector posición o fila homogénea
+                    if (i < 3 && j < 3) {
+                        td.className += 'text-emerald-300 font-medium';
+                        td.textContent = val.toFixed(3);
+                    } else if (i < 3 && j === 3) {
+                        td.className += 'text-amber-400 font-bold bg-amber-500/5 rounded';
+                        td.textContent = val.toFixed(2);
+                    } else {
+                        td.className += 'text-slate-500';
+                        td.textContent = val.toFixed(0);
+                    }
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+        }
+
+        function selectMatrix(key) {
+            state.selectedMatrix = key;
+            document.querySelectorAll('.matrix-tab').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white', 'font-semibold');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`btn-${key}`);
+            activeBtn.classList.remove('text-slate-400');
+            activeBtn.classList.add('bg-emerald-600', 'text-white', 'font-semibold');
+            renderSelectedMatrix();
+        }
+
+        function applyPreset(presetName) {
+            if (presetName === 'neutral') {
+                state.theta1 = 0;
+                state.theta2 = 0;
+                state.theta3 = 0;
+            } else if (presetName === 'stance') {
+                state.theta1 = 15;
+                state.theta2 = 55;
+                state.theta3 = -105;
+            } else if (presetName === 'jump') {
+                state.theta1 = -10;
+                state.theta2 = 95;
+                state.theta3 = -140;
+            }
+
+            document.getElementById('slider-theta1').value = state.theta1;
+            document.getElementById('slider-theta2').value = state.theta2;
+            document.getElementById('slider-theta3').value = state.theta3;
+
+            recalculateAll();
+        }
+
+        function recalculateAll() {
+            computeForwardKinematics();
+            update3DScene();
+            updateUI();
+        }
+
+        // =========================================================================
+        // 5. INICIALIZACIÓN Y EVENT LISTENERS
+        // =========================================================================
+        window.onload = function () {
+            initThreeJS();
+            recalculateAll();
+            animate();
+
+            // Vincular sliders articulares
+            ['theta1', 'theta2', 'theta3', 'l1', 'l2', 'l3'].forEach(id => {
+                const slider = document.getElementById(`slider-${id}`);
+                slider.addEventListener('input', (e) => {
+                    const key = id.startsWith('l') ? id.toUpperCase() : id;
+                    state[key] = parseFloat(e.target.value);
+                    recalculateAll();
+                });
+            });
+
+            // Vincular checkboxes de visualización
+            document.getElementById('toggleFrames').addEventListener('change', (e) => {
+                state.showFrames = e.target.checked;
+                update3DScene();
+            });
+
+            document.getElementById('toggleAnatomy').addEventListener('change', (e) => {
+                state.showAnatomy = e.target.checked;
+                update3DScene();
+            });
+        };
+    </script>
+</body>
+</html>
